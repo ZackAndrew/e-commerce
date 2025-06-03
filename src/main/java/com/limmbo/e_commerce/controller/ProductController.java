@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -45,7 +46,7 @@ public class ProductController {
     }
 
     @GetMapping("/product/{productId}/image")
-    public ResponseEntity<byte[]> getImageByProductId(@PathVariable int productId){
+    public ResponseEntity<byte[]> getImageByProductId(@PathVariable int productId) {
 
         Product product = service.getProductById(productId);
         byte[] imageFile = product.getImageData();
@@ -54,4 +55,31 @@ public class ProductController {
                 .contentType(MediaType.valueOf(product.getImageType()))
                 .body(imageFile);
     }
+
+    @PutMapping("/product/{id}")
+    public ResponseEntity<String> updateProduct(@PathVariable int id,
+                                                @RequestPart("product") Product product,
+                                                @RequestPart("imageFile") MultipartFile imageFile) {
+        try {
+            Product updatedProduct = service.updateProduct(id, product, imageFile);
+            if (updatedProduct != null) {
+                return ResponseEntity.ok("Product added successfully");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product is not found");
+            }
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to update product:" + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/product/{id}")
+    public ResponseEntity<String> deleteProduct(@PathVariable int id) {
+        boolean deleted = service.deleteProduct(id);
+        if (deleted) {
+            return ResponseEntity.ok("Product deleted successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found");
+        }
+    }
+
 }
